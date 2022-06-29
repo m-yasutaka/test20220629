@@ -10,10 +10,15 @@ CVDについては[こちら](https://fujitsu.github.io/controlled-vocabulary-de
 - docker-compose : バージョン1.23以上
 
 # セットアップ方法
-1. Linuxマシンのターミナル上で以下のコマンドを実行します。<br>
+1. proxy環境下で使用されるときは HTTP_PROXY, HTTPS_PROXYを環境変数に設定してください。
+2. Linuxマシンのターミナル上で以下のコマンドを実行します。<br>
 ```docker-compose up -d```
-2. 作業環境のWEBブラウザで以下にアクセスします。<br>
+3. 作業環境のWEBブラウザで以下にアクセスします。<br>
 ```http://(hostname):10081/```
+
+```
+http://(hostname):10081/
+```
 
 # サポートブラウザ
 * Google Chrome
@@ -31,8 +36,24 @@ CVDについては[こちら](https://fujitsu.github.io/controlled-vocabulary-de
   * 統制語彙（語彙を編集したファイル） : .n3, .nquads, .nt, .trix, .turtle, .xml, .jsonld
 
 
-## 編集用語彙_metaのサンプル
+##  ファイル形式の変換（暫定措置）
+このツールの入出力ファイル形式はcsv（あるいはxlsx）ですが、2021年度にスキーマが変更されました。したがって、ファイルを古い形式（2020年度版）から新しい形式（2021年度版）に変換する必要があります。
+※すべての用語は日本語として扱われます。
 
+### 新しいファイル形式を古いファイル形式に変換する方法
+1. 変換する新しいファイルをnew2old.pyと同じディレクトリに置きます。
+2. ```$ python new2old.py [input new format csv] [output old format csv]```<br>
+例) python new2old.py in_new.csv out_old.csv <br>
+※「言語」列の値が"en"の用語は、変換処理によって削除されます。
+
+### 古いファイル形式を新しいファイル形式に変換する方法
+1. 変換する古いファイルをold2new.pyと同じディレクトリに置きます。
+2. ```python old2new.py [input old format csv] [output new format csv] [URI prefix]```<br>
+例) python old2new.py in_old.csv out_new.csv http\://myVocab/ <br>
+※変換後、すべての用語の「言語」列の値は"ja"となります。
+
+
+## 編集用語彙_metaのサンプル
 ```
 語彙の名称,語彙の英語名称,バージョン,接頭語,語彙のURI,語彙の説明,語彙の英語説明,語彙の作成者
 サンプル語彙,sample vocabulary,1.0.0,my,http://myVocabulary/,サンプル用の語彙です,The vocabulary for sample,サンプル太郎
@@ -41,9 +62,7 @@ CVDについては[こちら](https://fujitsu.github.io/controlled-vocabulary-de
 -  「語彙の名称」列から「語彙の作成者」列まで全て必須です。
 -  独自の列が含まれていても問題ありません。
 
-
 ## 編集用語彙のサンプル
-
 ```
 用語名,代表語,言語,代表語のURI,上位語のURI,他語彙体系の同義語のURI,用語の説明,作成日,最終更新日,同義語候補,上位語候補,x座標値,y座標値,色1,色2,確定済み用語
 コンビニ,コンビニエンスストア,ja,http://myVocabulary/1,http://myVocabulary/2,,コンビニエンスストアの略称です,2021-04-02T12:43:02Z,2021-04-08T16:07:59Z,"常駐警備, 警備員, 機械警備, ビルメンテナンス, 運送会社, 運転代行, 貴重品輸送警備, ホームセキュリティ, ガーディアンエンジェルス, 警備保障",,3.779367076,-44.97713738,black,black,0
@@ -136,7 +155,6 @@ shop,store,en,http://myVocabulary/2,,http://otherVocabulary/16,,2021-04-01T11:40
 
 
 ## 参照用語彙のサンプル
-
 ```
 用語名,代表語,言語,代表語のURI,上位語のURI,他語彙体系の同義語のURI,用語の説明,作成日,最終更新日,x座標値,y座標値
 カイトウメン,カイトウメン,ja,http://cavoc.org/cvo/ns/3/C822,http://cavoc.org/cvo/ns/3/C876,,,2017-10-02T12:02:48Z,2021-07-14T12:43:45Z,3.779367076,-44.97713738
@@ -164,28 +182,9 @@ Edible cotton,Edible cotton,en,http://cavoc.org/cvo/ns/3/C1055,http://cavoc.org/
 読み込み用ファイルの作成方法は[こちら](example-inputdata-creation/README.md)を参照ください。
 
 
-# URIプレフィックス
-app/app/client/config/Config.jsを使用して、URIプレフィックスの略語を設定することができます。入力したURIに設定したURIプレフィックスが含まれている場合、設定された略語に自動的に変換されCVD上で確認することができます。また、設定した略語をCVD上で入力することもできます。いずれの場合もapp/app/client/config/Config.jsに設定したURIプレフィックスとして認識され、データベースに保存されます。
-
-
-## URIプレフィックスの略語の設定の例（app/app/client/config/Config.js）
-URIプレフィックスである"origin"のバリューは"equiv"のバリューに変換されます。<br>
-以下のサンプルでは、`'http://cavoc.org/'`は`'cavoc:'`に、`'http://example.org/'`は`'ex:'`に変換されます。
-
-```
-...
-'prefix': [
-  {
-    'origin': 'http://cavoc.org/',
-    'equiv': 'cavoc:',
-  },
-  {
-    'origin': 'http://example.org/',
-    'equiv': 'ex:',
-  },
-],
-...
-```
+## 入力用データの作成サンプル
+入力用データの作成サンプルは下記ページを参照ください。<br>
+[編集語彙、参照語彙、コーパスの作成例](example-inputdata-creation/README.md)
 
 
 # 用語の座標値のスケール倍率

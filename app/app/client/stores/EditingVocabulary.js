@@ -444,7 +444,7 @@ class EditingVocabulary {
    * @return {string} - source information
    */
   @action getReferenceFromData(term, type) {
-    let str = '( ';
+    let str = '';
 
     if ((0 == this.selectedFile.id) && (this.currentNode.id)) {
       switch (type) {
@@ -512,7 +512,7 @@ class EditingVocabulary {
       }
     }
 
-    str += ')';
+    str += '';
     return str;
   }
 
@@ -1481,7 +1481,7 @@ class EditingVocabulary {
       }
     }
 
-    if (edit && refere) {;
+    if (edit && refere) {
       currentPos.position_x = edit.position_x;
       currentPos.position_y = edit.position_y;
 
@@ -1768,11 +1768,15 @@ class EditingVocabulary {
   /**
    * Calculate the coordinates of the term from the coordinates of the visualization panel 
    * @param  {Number} position x or y position
+   * @param  {bool}   isDrag true: Calculation for drag , false: other
    * @return {Number} - reverse value
    */
-   calcReversePosition(position) {     
-    const ret =  Math.sign(position)*1.0/10000.0*Math.pow(Math.E, 4.0/3.0*Math.log(1.0/2.0*Math.abs(position)));
-    return ret;
+   calcReversePosition(position, isDrag=false) {
+     if(isDrag){
+       return Math.sign(position)*1.0/10000.0*Math.pow(Math.E, 4.0/3.0*Math.log(1.0/2.0*Math.abs(position)));
+     }else{
+       return position / 1000;
+     }
   }
 
   /**
@@ -2007,11 +2011,11 @@ class EditingVocabulary {
         following,
     );
 
-    // Updating vocabulary information by updating broader term //////////////////
+    // Updating vocabulary information by updating preferred label //////////////////
 
-    // Pre-update broader term
+    // Pre-update preferred label
     const prevPrfrdLbl = this.currentNode.preferred_label;
-    // Updated broader term
+    // Updated preferred label
     const nextPrfrdLbl = updateCurrent.preferred_label;
 
     this.updateVocabularyForPreferredLabel(
@@ -2031,12 +2035,68 @@ class EditingVocabulary {
 
     return '';
   }
+
+
+  /**
+   * Delete Vocabulary
+   * 
+   */
+   @action deleteVocabulary(){
+
+   
+    const target = this.currentNode;  
+
+    if( 1 > this.selectedTermList.length) return;
+    if( !target) return;
+    
+    const previous = [target];
+    const following = [];
+    const updateTermList=[];
+
+    this.editingVocabulary.forEach((obj) => {
+      let pushed=false;
+      let tmpObj={ ...obj };
+
+      // Delete if it is included in the preferred_label
+      if (obj.preferred_label && target.preferred_label && obj.id != target.id 
+        && obj.preferred_label == target.preferred_label){
+        pushed=true;
+        obj.preferred_label =obj.term;
+      }
+
+      // Delete if it is included in the broader_term
+      if (obj.broader_term && obj.broader_term == target.term){
+        pushed=true;
+        obj.broader_term ='';
+      }
+      if(pushed){
+        previous.push(tmpObj);
+        following.push(obj);
+        updateTermList.push(obj);
+      }
+    });
+
+    const history = new History('vocabulary', target.id);
+    history.previous = previous;
+    history.following = following;
+    history.targetId = target.id;
+ 
+    editingHistoryStore.addHistory(history);
+
+    this.updateRequest(updateTermList,[target.id], target);
+    
+    
+    this.currentNodeClear();
+    this.tmpDataClear();
+    this.setSelectedTermList(target.term); // Remove target from selected terms
+  }
+
   /**
    * Updating coordinate values etc. to DB 
    * @param  {object} nodes - cytoscape nodes
    * @return {string} - error message
    */
-  @action updateVocabularys( nodes) {
+  @action updateVocabularys( nodes, isDrag=false) {
     const error = this.errorCheck();
     if (error != '') {
       return error;
@@ -2053,8 +2113,8 @@ class EditingVocabulary {
       for (let node of nodes) {
         const posi = node.position();
         if( item.term === node.data().term){
-          position_x = this.calcReversePosition( posi.x);
-          position_y = this.calcReversePosition( posi.y);
+          position_x = this.calcReversePosition( posi.x, isDrag);
+          position_y = this.calcReversePosition( posi.y, isDrag);
 
           if(( threshold > Math.abs( Number( item.position_x) - position_x))
           || ( threshold > Math.abs( Number( item.position_y) - position_y))){
@@ -2068,6 +2128,13 @@ class EditingVocabulary {
       if( !tmpData || position_x === null){
         continue;
       }
+      
+      const history = new History('position', item.id);
+      history.previous = { position_x: Number(item.position_x), position_y: Number(item.position_y)};
+      history.following ={ position_x:             position_x , position_y:             position_y };
+      history.targetId = item.id;
+   
+      editingHistoryStore.addHistory(history);
 
       item.position_x = position_x;
       item.position_y = position_y;

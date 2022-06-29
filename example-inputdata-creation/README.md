@@ -87,14 +87,15 @@ mountdir/data/に、SansyougoiAll.csv、SansyougoiTarget.csvというファイ�
 - 列名の重複がないことを確認してください。
 - reference.csvの文字コードはBOM付きUTF-8で作成してください。
 
+
 ### reference.ttl
 - 既存の語彙の情報が記述されたTurtleファイルです。
 - reference.ttlを使用するかどうかは任意です。参照したいturtle形式の既存の語彙がある場合は、ファイル名を"reference.ttl"として作成してください。
 - このREADME下部に提示したサンプルのように、reference.ttlは主に[SKOS](https://www.w3.org/TR/2009/REC-skos-reference-20090818/)を使用して記述されている必要があります。
 
-
 ## configure
 mountdir/src/config.jsonで設定を変更することができます。
+
 
 |key1(Category)|key2(Phase)|key3(Config)|value type|default value|detail|
 | --- | --- | --- | --- | --- | --- |
@@ -125,7 +126,6 @@ shop,store,en,http://myVocabulary/2,,http://otherVocabulary/16,
 ```
 
 ## domain_text.txtのサンプル
-
 ```
 <doc id="5" url="https://ja.wikipedia.org/wiki?curid=5" title="アンパサンド">
 アンパサンド
@@ -156,7 +156,6 @@ SGML、XML、HTMLでは、アンパサンドを使ってSGML実体を参照す�
 ```
 
 ## reference.csvのサンプル
-
 ```
 用語名,代表語,言語,代表語のURI,上位語のURI,他語彙体系の同義語のURI,用語の説明
 カイトウメン,カイトウメン,ja,http://cavoc.org/cvo/ns/3/C822,http://cavoc.org/cvo/ns/3/C876,,
